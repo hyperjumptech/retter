@@ -32,6 +32,7 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="last_opened_file_path" value="$USER_HOME$" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="watcher.settings" />
   </component>
   <component name="RunManager">
@@ -71,22 +72,22 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="629" y="298" key="EditFileWatcherDialog/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612060476266" />
-    <state width="1877" height="282" key="GridCell.Tab.0.bottom" timestamp="1612064143604">
+    <state width="1877" height="282" key="GridCell.Tab.0.bottom" timestamp="1612072301961">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612064143604" />
-    <state width="1877" height="282" key="GridCell.Tab.0.center" timestamp="1612064143604">
+    <state width="1877" height="282" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612072301961" />
+    <state width="1877" height="282" key="GridCell.Tab.0.center" timestamp="1612072301961">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.center/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612064143604" />
-    <state width="1877" height="282" key="GridCell.Tab.0.left" timestamp="1612064143604">
+    <state width="1877" height="282" key="GridCell.Tab.0.center/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612072301961" />
+    <state width="1877" height="282" key="GridCell.Tab.0.left" timestamp="1612072301961">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.left/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612064143604" />
-    <state width="1877" height="282" key="GridCell.Tab.0.right" timestamp="1612064143604">
+    <state width="1877" height="282" key="GridCell.Tab.0.left/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612072301961" />
+    <state width="1877" height="282" key="GridCell.Tab.0.right" timestamp="1612072301961">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="282" key="GridCell.Tab.0.right/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612064143604" />
+    <state width="1877" height="282" key="GridCell.Tab.0.right/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612072301961" />
     <state x="461" y="165" key="SettingsEditor" timestamp="1612060477989">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
