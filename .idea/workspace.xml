@@ -76,6 +76,10 @@
     <integration-enabled>true</integration-enabled>
   </component>
   <component name="WindowStateProjectService">
+    <state x="723" y="322" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1612152983690">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="723" y="322" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1612152983690" />
     <state x="629" y="298" key="EditFileWatcherDialog" timestamp="1612060476266">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
