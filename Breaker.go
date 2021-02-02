@@ -12,15 +12,10 @@ var (
 		"module": "GoBreaker",
 		"file":   "Breaker.go",
 	})
+	PathBreakers = make(map[string]*gobreaker.CircuitBreaker)
 )
 
-func NewPathBreakers() PathBreakers {
-	return make(PathBreakers)
-}
-
-type PathBreakers map[string]*gobreaker.CircuitBreaker
-
-func (pb PathBreakers) GetBreakerSettingForRequest(req *http.Request) gobreaker.Settings {
+func GetBreakerSettingForRequest(req *http.Request) gobreaker.Settings {
 	completePath := req.URL.Path
 	if len(req.URL.RawQuery) > 0 {
 		completePath = fmt.Sprintf("%s?%s", completePath, req.URL.RawQuery)
@@ -39,15 +34,15 @@ func (pb PathBreakers) GetBreakerSettingForRequest(req *http.Request) gobreaker.
 	}
 }
 
-func (pb PathBreakers) GetBreakerForRequest(req *http.Request) *gobreaker.CircuitBreaker {
+func GetBreakerForRequest(req *http.Request) *gobreaker.CircuitBreaker {
 	completePath := req.URL.Path
 	if len(req.URL.RawQuery) > 0 {
 		completePath = fmt.Sprintf("%s?%s", completePath, req.URL.RawQuery)
 	}
-	if b, ok := pb[completePath]; ok {
+	if b, ok := PathBreakers[completePath]; ok {
 		return b
 	}
-	newBreaker := gobreaker.NewCircuitBreaker(pb.GetBreakerSettingForRequest(req))
-	pb[completePath] = newBreaker
+	newBreaker := gobreaker.NewCircuitBreaker(GetBreakerSettingForRequest(req))
+	PathBreakers[completePath] = newBreaker
 	return newBreaker
 }
