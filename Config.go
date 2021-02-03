@@ -13,7 +13,10 @@ const (
 	CacheTTL = "cache.ttl"
 
 	// CacheDetectSession is key config for specifying whether to include session detection or not
-	CacheDetectSession = "cache.detectsession"
+	CacheDetectQuery = "cache.detect.query"
+
+	// CacheDetectSession is key config for specifying whether to include session detection or not
+	CacheDetectSession = "cache.detect.session"
 
 	// BackendURL is key config for the base URL to call to backend
 	BackendURL = "backend.baseurl"
@@ -32,6 +35,7 @@ var (
 	Config = Configuration{
 		CacheTTL:                   "60",    // time to live in seconds
 		CacheDetectSession:         "false", // always account session cookie in the cache
+		CacheDetectQuery:           "true",  // always account request URL query in the cache
 		BackendURL:                 "http://localhost:8088",
 		ServerListen:               ":8089",
 		"server.timeout.write":     "15 seconds",

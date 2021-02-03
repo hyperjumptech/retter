@@ -167,7 +167,7 @@ func CacheGet(req *http.Request, resetTTL bool) (HTTPTransaction, error) {
 
 func getKey(req *http.Request) string {
 	completePath := req.URL.Path
-	if len(req.URL.RawQuery) > 0 {
+	if Config.GetBoolean(CacheDetectQuery) && len(req.URL.RawQuery) > 0 {
 		completePath = fmt.Sprintf("%s?%s", completePath, req.URL.RawQuery)
 	}
 	if Config.GetBoolean(CacheDetectSession) {
@@ -176,7 +176,9 @@ func getKey(req *http.Request) string {
 		if len(cookieRow) > 0 {
 			cookie = cookieRegex.FindString(cookieRow)
 		}
-		return fmt.Sprintf("%s:%s", cookie, completePath)
+		if len(cookie) > 0 {
+			completePath = fmt.Sprintf("%s:%s", cookie, completePath)
+		}
 	}
 	return completePath
 }

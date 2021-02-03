@@ -60,6 +60,19 @@ In ugly condition (CIRCUIT OPEN):
 
 {no benchmark yet}
 
+
+# Tasks and Help Wanted
+
+Yes. We need contributors to make **RETTER** even better and useful to the Open Source Community.
+
+* Need to do more and more and more tests.
+* Better code coverage test.
+* Better commenting for go doc best practice.
+* Improve function argument handling to be more fluid and intuitive.
+
+If you really want to help us, simply `Fork` the project and apply for Pull Request.
+Please read our [Contribution Manual](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCTS.md)
+
 # FAQ
 
 **Q1** : Is it guaranteed that my web performance increases ?<br>
