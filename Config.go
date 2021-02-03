@@ -9,10 +9,17 @@ import (
 )
 
 const (
-	CACHE_TTL           = "cache.ttl"
-	CACHE_DETECTSESSION = "cache.detectsession"
-	BACKEND_URL         = "backend.baseurl"
-	SERVER_LISTEN       = "server.listen"
+	// CacheTTL is key config for number of TTL in second
+	CacheTTL = "cache.ttl"
+
+	// CacheDetectSession is key config for specifying whether to include session detection or not
+	CacheDetectSession = "cache.detectsession"
+
+	// BackendURL is key config for the base URL to call to backend
+	BackendURL = "backend.baseurl"
+
+	// ServerListen is key config for the server listening setting (bind host and port)
+	ServerListen = "server.listen"
 )
 
 var (
@@ -20,11 +27,13 @@ var (
 		"module": "Configuration",
 		"file":   "Config.go",
 	})
+
+	// Config is the configuration instance
 	Config = Configuration{
-		CACHE_TTL:                  "60",    // time to live in seconds
-		CACHE_DETECTSESSION:        "false", // always account session cookie in the cache
-		BACKEND_URL:                "http://localhost:8088",
-		SERVER_LISTEN:              ":8089",
+		CacheTTL:                   "60",    // time to live in seconds
+		CacheDetectSession:         "false", // always account session cookie in the cache
+		BackendURL:                 "http://localhost:8088",
+		ServerListen:               ":8089",
 		"server.timeout.write":     "15 seconds",
 		"server.timeout.read":      "15 seconds",
 		"server.timeout.idle":      "60 seconds",
@@ -44,8 +53,12 @@ func init() {
 	}
 }
 
+// Configuration configuration is a simple string to string map to store RETTER configuration.
+// Although its a string to string map, developer should not access this map directly to obtain configuration value.
+// Use GetString, GetInt, GetBool or GetFloat function as it uses Viper to sync configuration with environment variable.
 type Configuration map[string]string
 
+// GetString will return string configuration value of a string key
 func (c Configuration) GetString(key string) string {
 	if valStr, ok := c[key]; ok {
 		ret := viper.GetString(key)
@@ -57,6 +70,7 @@ func (c Configuration) GetString(key string) string {
 	return ""
 }
 
+// GetInt will return integer configuration value of a string key
 func (c Configuration) GetInt(key string) int {
 	if valStr, ok := c[key]; ok {
 		ret := viper.GetInt(key)
@@ -72,6 +86,7 @@ func (c Configuration) GetInt(key string) int {
 	return 0
 }
 
+// GetFloat will return float64 configuration value of a string key
 func (c Configuration) GetFloat(key string) float64 {
 	if valStr, ok := c[key]; ok {
 		ret := viper.GetFloat64(key)
@@ -87,6 +102,7 @@ func (c Configuration) GetFloat(key string) float64 {
 	return 0
 }
 
+// GetBoolean will return bool configuration value of a string key
 func (c Configuration) GetBoolean(key string) bool {
 	if valStr, ok := c[key]; ok {
 		ret := viper.GetBool(key)

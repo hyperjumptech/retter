@@ -12,9 +12,14 @@ var (
 		"module": "GoBreaker",
 		"file":   "Breaker.go",
 	})
+
+	// PathBreakers is a map of string to gobreaker.CircuitBreaker.
+	// The string key is a full path + session key information.
+	// This makes each user's accessible path is circuit breaked.
 	PathBreakers = make(map[string]*gobreaker.CircuitBreaker)
 )
 
+// GetBreakerSettingForRequest will create a grobreaker.Setting for each created CircuitBreaker.
 func GetBreakerSettingForRequest(req *http.Request) gobreaker.Settings {
 	completePath := req.URL.Path
 	if len(req.URL.RawQuery) > 0 {
@@ -29,11 +34,13 @@ func GetBreakerSettingForRequest(req *http.Request) gobreaker.Settings {
 			return counts.ConsecutiveFailures > 5
 		},
 		OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
-			breakerLog.Infof("[%s] changed state from %s to %s", from.String(), to.String())
+			breakerLog.Infof("[%s] changed state from %s to %s", completePath, from.String(), to.String())
 		},
 	}
 }
 
+// GetBreakerForRequest returns a CircuitBreaker to be use for circuit breaking
+// each particular request.
 func GetBreakerForRequest(req *http.Request) *gobreaker.CircuitBreaker {
 	completePath := req.URL.Path
 	if len(req.URL.RawQuery) > 0 {

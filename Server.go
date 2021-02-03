@@ -16,18 +16,30 @@ import (
 )
 
 const (
+	// RetterStatusBackendTimeout is a custom HTTP response code if
+	// the http client timed out while trying to call the backend server
 	RetterStatusBackendTimeout = 1000
 )
 
 var (
 	serverLog = logrus.WithFields(logrus.Fields{
-		"module": "RetterHttpHandler",
+		"module": "RetterHTTPHandler",
 		"file":   "Server.go",
 	})
-	ServerStarTime      time.Time
-	RequestCount        uint16
-	TotalResponseTime   uint64
+
+	// ServerStarTime is a variable to store server start time.
+	ServerStarTime time.Time
+
+	// RequestCount to store total served request, with exception to /health health check path.
+	RequestCount uint16
+
+	// TotalResponseTime is a total response time in millisecond been recorded by this RETTER server
+	TotalResponseTime uint64
+
+	// SlowestResponseTime is the number of milliseconds of the slowest response time.
 	SlowestResponseTime uint64
+
+	// FastestResponseTime is the number of milliseconds of the fastest response time.
 	FastestResponseTime uint64
 )
 
@@ -35,17 +47,20 @@ func init() {
 	ServerStarTime = time.Now()
 }
 
-func NewRetterHttpHandler() http.Handler {
-	return &RetterHttpHandler{
-		BackendBaseURL: Config.GetString(BACKEND_URL),
+// NewRetterHTTPHandler create new http.Handler for this Retter server
+func NewRetterHTTPHandler() http.Handler {
+	return &RetterHTTPHandler{
+		BackendBaseURL: Config.GetString(BackendURL),
 	}
 }
 
-type RetterHttpHandler struct {
+// RetterHTTPHandler an implementation of http.Handler
+type RetterHTTPHandler struct {
 	BackendBaseURL string
 }
 
-func (rhh *RetterHttpHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+// ServeHTTP is the handling method of incoming HTTP request and response
+func (rhh *RetterHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	if strings.ToUpper(req.Method) == "GET" && req.URL.Path == "/health" {
 		res.Header().Add("Content-Type", "application/json")
 		res.WriteHeader(http.StatusOK)
@@ -149,6 +164,12 @@ func (rhh *RetterHttpHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 	}
 }
 
+// ServeFailedProcess will be invoked if a call to the Backend server
+// failed to be done due to timeout or 5xx errors.
+// It will try to look into cache for the cached successful response or
+// into history of last known response that was successful
+// If no cache or last successful response were found, it will then emit
+// 5xx error
 func ServeFailedProcess(res http.ResponseWriter, req *http.Request) {
 	cachedTx, err := CacheGet(req, true)
 	if err != nil {
@@ -171,6 +192,7 @@ func ServeFailedProcess(res http.ResponseWriter, req *http.Request) {
 	ReturnRecorder(cachedTx.Response(), res)
 }
 
+// ReturnRecorder will write recorded response into response writer
 func ReturnRecorder(recorder *httptest.ResponseRecorder, writer http.ResponseWriter) {
 	// First we write the headers
 	for k, v := range recorder.Header() {
@@ -190,6 +212,8 @@ func ReturnRecorder(recorder *httptest.ResponseRecorder, writer http.ResponseWri
 	writer.Write(body)
 }
 
+// Execute will do the actual HTTP call forwarding to the backend server.
+// This function is called behind circuit breaker
 func Execute(timeout time.Duration, targetURL string, res http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	var urlToCall string

@@ -27,7 +27,7 @@ func main() {
 
 func startServer() {
 	startTime := time.Now()
-	listen := Config.GetString(SERVER_LISTEN)
+	listen := Config.GetString(ServerListen)
 	if len(listen) == 0 {
 		panic("server.listen not configured")
 	}
@@ -62,7 +62,7 @@ func startServer() {
 		WriteTimeout: WriteTimeout,
 		ReadTimeout:  ReadTimeout,
 		IdleTimeout:  IdleTimeout,
-		Handler:      NewRetterHttpHandler(), // Pass our instance of gorilla/mux in.
+		Handler:      NewRetterHTTPHandler(), // Pass our instance of gorilla/mux in.
 	}
 
 	// Run our server in a goroutine so that it doesn't block.
