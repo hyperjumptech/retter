@@ -12,7 +12,7 @@ const (
 	// CacheTTL is key config for number of TTL in second
 	CacheTTL = "cache.ttl"
 
-	// CacheDetectSession is key config for specifying whether to include session detection or not
+	// CacheDetectQuery is key config for specifying whether to include session detection or not
 	CacheDetectQuery = "cache.detect.query"
 
 	// CacheDetectSession is key config for specifying whether to include session detection or not
@@ -23,6 +23,14 @@ const (
 
 	// ServerListen is key config for the server listening setting (bind host and port)
 	ServerListen = "server.listen"
+
+	// FailureRate is key config for the failure rate detection in the CircuitBreaker.
+	// If the request to backend has reached this failure rate, circuit will open.
+	// The fail rate will reset every 10 second
+	FailureRate = "breaker.fail.rate"
+
+	// ConsecutiveFail is key config for the number of consecutive backend http call fails.
+	ConsecutiveFail = "breaker.consecutive.fail"
 )
 
 var (
@@ -42,6 +50,8 @@ var (
 		"server.timeout.read":      "15 seconds",
 		"server.timeout.idle":      "60 seconds",
 		"server.timeout.graceshut": "15 seconds",
+		FailureRate:                "0.66",
+		ConsecutiveFail:            "5",
 	}
 )
 

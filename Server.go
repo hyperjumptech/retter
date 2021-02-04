@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/hyperjumptech/jiffy"
+	"github.com/hyperjumptech/retter/cache"
 	"github.com/sirupsen/logrus"
 	"github.com/sony/gobreaker"
 	"io/ioutil"
@@ -26,6 +27,8 @@ var (
 		"module": "RetterHTTPHandler",
 		"file":   "Server.go",
 	})
+
+	lastKnownSuccess = make(map[string]HTTPTransaction)
 
 	// ServerStarTime is a variable to store server start time.
 	ServerStarTime time.Time
@@ -66,8 +69,8 @@ func (rhh *RetterHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 		res.WriteHeader(http.StatusOK)
 
 		uptime := jiffy.DescribeDuration(time.Since(ServerStarTime), jiffy.NewWant())
-		cacheCount := len(cache)
-		timerCount := len(ttlTimer)
+		cacheCount := cache.CacheSize()
+		timerCount := cache.TimerSize()
 		breakerCount := len(PathBreakers)
 
 		AverageResponseTime := float64(TotalResponseTime) / float64(RequestCount)
@@ -130,7 +133,7 @@ func (rhh *RetterHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 	breaker := GetBreakerForRequest(req)
 	switch breaker.State() {
 	case gobreaker.StateOpen:
-		ServeFailedProcess(res, req)
+		ServeFailedProcess(http.StatusBadGateway, res, req, breaker.State())
 	default:
 		l := serverLog.WithFields(logrus.Fields{
 			"Method": req.Method,
@@ -149,11 +152,19 @@ func (rhh *RetterHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 		timeEnd := time.Now()
 		recorder := val.(*httptest.ResponseRecorder)
 		if err != nil {
-			l.Debugf("Request key %s error with response code %d", key, recorder.Result().StatusCode)
-			ServeFailedProcess(res, req)
+			// logrus.Errorf("Error in breaker execution. got %s - code : %d", err.Error(), recorder.Result().StatusCode)
+			ServeFailedProcess(recorder.Result().StatusCode, res, req, breaker.State())
 		} else {
+			recorder.Header().Set("X-Circuit", getGoBreakerString(breaker.State()))
+			recorder.Header().Set("X-Retter", "backend")
 			ReturnRecorder(recorder, res)
-			CacheStore(timeStart, timeEnd, req, recorder)
+			tx := &DefaultHTTPTransaction{
+				TimeStart: timeStart,
+				TimeEnd:   timeEnd,
+				Rec:       req,
+				Res:       recorder,
+			}
+			cache.Store(key, tx, time.Duration(Config.GetInt(CacheTTL))*time.Second)
 			lastKnownSuccess[key] = &DefaultHTTPTransaction{
 				TimeStart: timeStart,
 				TimeEnd:   timeEnd,
@@ -164,31 +175,44 @@ func (rhh *RetterHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 	}
 }
 
+func getGoBreakerString(state gobreaker.State) string {
+	switch state {
+	case gobreaker.StateOpen:
+		return "OPEN"
+	case gobreaker.StateHalfOpen:
+		return "HALF-OPEN"
+	default:
+		return "CLOSED"
+	}
+}
+
 // ServeFailedProcess will be invoked if a call to the Backend server
 // failed to be done due to timeout or 5xx errors.
 // It will try to look into cache for the cached successful response or
 // into history of last known response that was successful
 // If no cache or last successful response were found, it will then emit
 // 5xx error
-func ServeFailedProcess(res http.ResponseWriter, req *http.Request) {
-	cachedTx, err := CacheGet(req, true)
-	if err != nil {
-		if err == ErrNotFound {
-			key := getKey(req)
-			if lastSuccessTx, ok := lastKnownSuccess[key]; ok {
-				ReturnRecorder(lastSuccessTx.Response(), res)
-				serverLog.Debugf("returned from last success for key %s", key)
-			} else {
-				res.Write([]byte("Backend is down, please try again in few minutes"))
-				res.WriteHeader(http.StatusBadGateway)
-			}
-			return
+func ServeFailedProcess(erroneousResponseCode int, res http.ResponseWriter, req *http.Request, state gobreaker.State) {
+	key := getKey(req)
+	val := cache.Get(key, false, 0)
+	if val == nil {
+		if lastSuccessTx, ok := lastKnownSuccess[key]; ok {
+			recorder := lastSuccessTx.Response()
+			recorder.Header().Set("X-Circuit", getGoBreakerString(state))
+			recorder.Header().Set("X-Retter", "last-known-success")
+			ReturnRecorder(recorder, res)
+			serverLog.Debugf("returned from last success for key %s", key)
+		} else {
+			res.Header().Set("X-Circuit", getGoBreakerString(state))
+			res.Header().Set("X-Retter", "no-cache")
+			res.WriteHeader(erroneousResponseCode)
+			res.Write([]byte("Backend is down, please try again in few minutes"))
 		}
-		serverLog.Errorf("error while fetch request for cache in circuit open")
-		res.Write([]byte(fmt.Sprintf("Retter cache error. got %s", err.Error())))
-		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	cachedTx := val.(HTTPTransaction)
+	res.Header().Set("X-Circuit", getGoBreakerString(state))
+	cachedTx.Response().Header().Set("X-Retter", "cache")
 	ReturnRecorder(cachedTx.Response(), res)
 }
 

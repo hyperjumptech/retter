@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sony/gobreaker"
 	"net/http"
+	"time"
 )
 
 var (
@@ -27,14 +28,20 @@ func GetBreakerSettingForRequest(req *http.Request) gobreaker.Settings {
 	}
 	return gobreaker.Settings{
 		Name:        completePath,
-		MaxRequests: 0,
-		Interval:    0,
+		MaxRequests: 1,
+		Interval:    10 * time.Second,
 		Timeout:     0,
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
-			return counts.ConsecutiveFailures > 5
+			done := counts.TotalFailures + counts.TotalSuccesses
+			if done > 0 && counts.Requests > 4 {
+				breakerLog.Tracef("[%s] ready to trip. totalFail %d of %d", completePath, counts.TotalFailures, done)
+				failRate := float64(counts.TotalFailures) / float64(done)
+				return failRate > Config.GetFloat(FailureRate)
+			}
+			return int(counts.ConsecutiveFailures) > Config.GetInt(ConsecutiveFail)
 		},
 		OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
-			breakerLog.Infof("[%s] changed state from %s to %s", completePath, from.String(), to.String())
+			breakerLog.Tracef("[%s] changed state from %s to %s", completePath, from.String(), to.String())
 		},
 	}
 }

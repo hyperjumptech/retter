@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hyperjumptech/jiffy"
+	"github.com/hyperjumptech/retter/test"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -21,8 +22,12 @@ func splash() {
 }
 
 func main() {
-	splash()
-	startServer()
+	if len(os.Args) == 1 {
+		splash()
+		startServer()
+	} else if len(os.Args) == 2 {
+		test.StartDummyServer(os.Args[1], true)
+	}
 }
 
 func startServer() {
@@ -81,8 +86,6 @@ func startServer() {
 	// Block until we receive our signal.
 	<-c
 
-	CacheStop()
-
 	// Create a deadline to wait for.
 	ctx, cancel := context.WithTimeout(context.Background(), wait)
 	defer cancel()
@@ -96,6 +99,6 @@ func startServer() {
 	// to finalize based on context cancellation.
 	dur := time.Now().Sub(startTime)
 	durDesc := jiffy.DescribeDuration(dur, jiffy.NewWant())
-	log.Infof("Shutting down. This Hansip been protecting the world for %s", durDesc)
+	log.Infof("Shutting down. This RETTER been protecting the backend service for %s", durDesc)
 	os.Exit(0)
 }
