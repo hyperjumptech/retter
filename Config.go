@@ -1,3 +1,21 @@
+/*-----------------------------------------------------------------------------------
+  --  RETTER                                                                       --
+  --  Copyright (C) 2021  RETTER's Contributors                                    --
+  --                                                                               --
+  --  This program is free software: you can redistribute it and/or modify         --
+  --  it under the terms of the GNU Affero General Public License as published     --
+  --  by the Free Software Foundation, either version 3 of the License, or         --
+  --  (at your option) any later version.                                          --
+  --                                                                               --
+  --  This program is distributed in the hope that it will be useful,              --
+  --  but WITHOUT ANY WARRANTY; without even the implied warranty of               --
+  --  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                --
+  --  GNU Affero General Public License for more details.                          --
+  --                                                                               --
+  --  You should have received a copy of the GNU Affero General Public License     --
+  --  along with this program.  If not, see <https:   -- www.gnu.org/licenses/>.   --
+  -----------------------------------------------------------------------------------*/
+
 package main
 
 import (
@@ -12,14 +30,25 @@ const (
 	// CacheTTL is key config for number of TTL in second
 	CacheTTL = "cache.ttl"
 
+	// CacheDetectQuery is key config for specifying whether to include session detection or not
+	CacheDetectQuery = "cache.detect.query"
+
 	// CacheDetectSession is key config for specifying whether to include session detection or not
-	CacheDetectSession = "cache.detectsession"
+	CacheDetectSession = "cache.detect.session"
 
 	// BackendURL is key config for the base URL to call to backend
 	BackendURL = "backend.baseurl"
 
 	// ServerListen is key config for the server listening setting (bind host and port)
 	ServerListen = "server.listen"
+
+	// FailureRate is key config for the failure rate detection in the CircuitBreaker.
+	// If the request to backend has reached this failure rate, circuit will open.
+	// The fail rate will reset every 10 second
+	FailureRate = "breaker.fail.rate"
+
+	// ConsecutiveFail is key config for the number of consecutive backend http call fails.
+	ConsecutiveFail = "breaker.consecutive.fail"
 )
 
 var (
@@ -32,12 +61,15 @@ var (
 	Config = Configuration{
 		CacheTTL:                   "60",    // time to live in seconds
 		CacheDetectSession:         "false", // always account session cookie in the cache
+		CacheDetectQuery:           "true",  // always account request URL query in the cache
 		BackendURL:                 "http://localhost:8088",
 		ServerListen:               ":8089",
 		"server.timeout.write":     "15 seconds",
 		"server.timeout.read":      "15 seconds",
 		"server.timeout.idle":      "60 seconds",
 		"server.timeout.graceshut": "15 seconds",
+		FailureRate:                "0.66",
+		ConsecutiveFail:            "5",
 	}
 )
 

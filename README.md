@@ -6,7 +6,6 @@ ________________________________________________________________
  |____|_  /_______  /  |____|     |____|   /_______  / |____|_  /
         \/        \/github.com/hyperjumptech/retter\/         \/ 
 ```
-# RETTER
 
 - **RETTER** is ... a Great Savior for your great web solution.
 - **RETTER** is ... a German word for "Savior"
@@ -54,11 +53,68 @@ In ugly condition (CIRCUIT OPEN):
 
 # Installation
 
-{install doc in progress}
+## Using available binary
+
+Go to **RETTER** release page, download the executable on the version you preffer.
+
+## Use Golang to automatically install.
+
+Install Golang on your server. Once installed, you can simply...
+
+```shell script
+go install github.com/hyperjumptech/retter
+```
+
+The executable binnary will be located at `$GOPATH/bin/retter`, Make sure your `$GOPATH/bin` is in your `$PATH`
+You can run the server straight away.
+
+# Running RETTER
+
+Once you get a hand on the binnary. You can simply execute them. If your configuration is correct, it will run smoothly.
+
+# Configuring RETTER
+
+**RETTER** configuration are all done through Environment Variables.
+Please put in the following environment variables if you want to change some of **RETTER** behavior.
+
+
+| Envorinment Variable               | Description                                             | Example / Default    |
+|------------------------------------|---------------------------------------------------------|----------------------|
+| RETTER_CACHE_TTL                   | The cache Time To Live in Seconds                       | 5                    |                       
+| RETTER_CACHE_DETECT_QUERY          | Take query parameter (if exist) as cache key            | false                |
+| RETTER_CACHE_DETECT_SESSION        | Take Cookie header for session as cache key             | true                 |
+| RETTER_BACKEND_BASEURL             | The base url of your server to protect                  | http://localhost:8088|
+| RETTER_SERVER_LISTEN               | The address where this RETTE server will be accessible  | :8089                |
+| RETTER_BREAKER_FAIL_RATE           | The failrate to which will trigger the circuit OPEN     | 0.66                 |
+| RETTER_BREAKER_CONSECUTIVE_FAIL    | The number of consecutive error to trigger circuit OPEN | 5                    |
+| RETTER_SERVER_TIMEOUT_WRITE        | The retter's server write timeout                       | 15 seconds,          |
+| RETTER_SERVER_TIMEOUT_READ         | The retter's server read timeout                        | 15 seconds,          |
+| RETTER_SERVER_TIMEOUT_IDLE         | The retter's idle timeout                               | 60 seconds,          |
+| RETTER_SERVER_TIMEOUT_GRACESHUT    | The retter's grace shutdown time                        | 15 seconds,          |
 
 # Benchmark
 
-{no benchmark yet}
+Please notice that this benchmark is greatly influenced by the network limitation. 
+
+```text
+goos: windows
+goarch: amd64
+pkg: github.com/hyperjumptech/retter
+BenchmarkRetterHTTPHandler_ServeHTTP
+BenchmarkRetterHTTPHandler_ServeHTTP-6   	       6	 450803033 ns/op
+```
+
+# Tasks and Help Wanted
+
+Yes. We need contributors to make **RETTER** even better and useful to the Open Source Community.
+
+* Need to do more and more and more tests.
+* Better code coverage test.
+* Better commenting for go doc best practice.
+* Improve function argument handling to be more fluid and intuitive.
+
+If you really want to help us, simply `Fork` the project and apply for Pull Request.
+Please read our [Contribution Manual](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCTS.md)
 
 # FAQ
 
@@ -91,3 +147,6 @@ In ugly condition (CIRCUIT OPEN):
 
 **Q10** : If the circuit breaker only works for `GET` request, how about the other?<br>
 **A10** : Other `method` WILL NOT BE circuit breaked; that means all `POST`, `PUT`, `DELETE`, `OPTIONS`, `HEAD`, `PATCH` will be forwarded to your web-app normally. 
+
+**Q11** : Could you make RETTER to use Redis for caching, instead of its own implementation?<br>
+**A11** : Good idea, I bet you could help me, please take a look at the `Caching.go` and create Redis implementation. Don't forget to make a PR! Thanks. 

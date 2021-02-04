@@ -1,9 +1,28 @@
+/*-----------------------------------------------------------------------------------
+  --  RETTER                                                                       --
+  --  Copyright (C) 2021  RETTER's Contributors                                    --
+  --                                                                               --
+  --  This program is free software: you can redistribute it and/or modify         --
+  --  it under the terms of the GNU Affero General Public License as published     --
+  --  by the Free Software Foundation, either version 3 of the License, or         --
+  --  (at your option) any later version.                                          --
+  --                                                                               --
+  --  This program is distributed in the hope that it will be useful,              --
+  --  but WITHOUT ANY WARRANTY; without even the implied warranty of               --
+  --  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                --
+  --  GNU Affero General Public License for more details.                          --
+  --                                                                               --
+  --  You should have received a copy of the GNU Affero General Public License     --
+  --  along with this program.  If not, see <https:   -- www.gnu.org/licenses/>.   --
+  -----------------------------------------------------------------------------------*/
+
 package main
 
 import (
 	"context"
 	"fmt"
 	"github.com/hyperjumptech/jiffy"
+	"github.com/hyperjumptech/retter/test"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -21,8 +40,12 @@ func splash() {
 }
 
 func main() {
-	splash()
-	startServer()
+	if len(os.Args) == 1 {
+		splash()
+		startServer()
+	} else if len(os.Args) == 2 {
+		test.StartDummyServer(os.Args[1], true)
+	}
 }
 
 func startServer() {
@@ -81,8 +104,6 @@ func startServer() {
 	// Block until we receive our signal.
 	<-c
 
-	CacheStop()
-
 	// Create a deadline to wait for.
 	ctx, cancel := context.WithTimeout(context.Background(), wait)
 	defer cancel()
@@ -96,6 +117,6 @@ func startServer() {
 	// to finalize based on context cancellation.
 	dur := time.Now().Sub(startTime)
 	durDesc := jiffy.DescribeDuration(dur, jiffy.NewWant())
-	log.Infof("Shutting down. This Hansip been protecting the world for %s", durDesc)
+	log.Infof("Shutting down. This RETTER been protecting the backend service for %s", durDesc)
 	os.Exit(0)
 }
