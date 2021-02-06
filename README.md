@@ -7,7 +7,7 @@ ________________________________________________________________
         \/        \/github.com/hyperjumptech/retter\/         \/ 
 ```
 
-[![Build Status](https://github.com/hyperjumptech/grule-rule-engine/actions)](https://github.com/hyperjumptech/retter/workflows/retter-ci/badge.svg)
+[![Build Status](https://github.com/hyperjumptech/retter/workflows/retter-ci/badge.svg)](https://github.com/hyperjumptech/grule-rule-engine/actions)
 
 - **RETTER** is ... a Great Savior for your great web solution.
 - **RETTER** is ... a German word for "Savior"
