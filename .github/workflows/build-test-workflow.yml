@@ -3,7 +3,7 @@ name: retter-ci
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
