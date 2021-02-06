@@ -72,16 +72,6 @@ func init() {
 
 // NewRetterHTTPHandler create new http.Handler for this Retter server
 func NewRetterHTTPHandler() http.Handler {
-	l := Config.GetString(ServerListen)
-	if l[0:1] == ":" {
-		l = "http://0.0.0.0" + l
-	}
-	logrus.Infof("This RETTER instance will forwards GET request...")
-
-	logrus.Infof("  From : %s/*", l)
-	logrus.Infof("  To   : %s/*", Config.GetString(BackendURL))
-	logrus.Infof("URL Query Detect   : %s\n", Config.GetString(CacheDetectQuery))
-	logrus.Infof("URL Session Detect : %s\n", Config.GetString(CacheDetectSession))
 	return &RetterHTTPHandler{
 		BackendBaseURL: Config.GetString(BackendURL),
 	}
