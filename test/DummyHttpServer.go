@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,7 @@ var (
 		failProbability: 0,
 	}
 	RequestCount = 0
+	LongBody     = strings.Repeat("This is a dummy line\n", 300)
 )
 
 func SetFastest(f, s time.Duration) {
@@ -106,9 +108,11 @@ func (dhh *DummyHttpHandler) ServeHTTP(res http.ResponseWriter, req *http.Reques
 			dhh.fastest = dhh.slowest
 			dhh.slowest = t
 		}
+		ToReturn := []byte(fmt.Sprintf("DONE %d \n %s", rc, LongBody))
 		res.Header().Set("Content-Type", "text/plain")
+		res.Header().Set("Content-Length", strconv.Itoa(len(ToReturn)))
 		res.WriteHeader(http.StatusOK)
-		res.Write([]byte(fmt.Sprintf("DONE %d", rc)))
+		res.Write(ToReturn)
 	} else {
 		dur := dhh.slowest - dhh.fastest
 		sleep := dhh.fastest + time.Duration(rand.Int63n(int64(dur)))
@@ -116,11 +120,15 @@ func (dhh *DummyHttpHandler) ServeHTTP(res http.ResponseWriter, req *http.Reques
 		res.Header().Set("Content-Type", "text/plain")
 		failRandom := rand.Float64()
 		if failRandom < dhh.failProbability {
+			ToReturn := []byte(fmt.Sprintf("ERROR %d", rc))
+			res.Header().Set("Content-Length", strconv.Itoa(len(ToReturn)))
 			res.WriteHeader(http.StatusInternalServerError)
-			res.Write([]byte(fmt.Sprintf("ERROR %d", rc)))
+			res.Write(ToReturn)
 		} else {
+			ToReturn := []byte(fmt.Sprintf("DONE %d \n %s", rc, LongBody))
+			res.Header().Set("Content-Length", strconv.Itoa(len(ToReturn)))
 			res.WriteHeader(http.StatusOK)
-			res.Write([]byte(fmt.Sprintf("DONE %d", rc)))
+			res.Write(ToReturn)
 		}
 	}
 }
