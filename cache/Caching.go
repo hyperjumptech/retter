@@ -20,6 +20,7 @@ package cache
 
 import (
 	"github.com/sirupsen/logrus"
+	"sync"
 	"time"
 )
 
@@ -30,6 +31,7 @@ var (
 	})
 	cacheData = make(map[string]interface{})
 	timerData = make(map[string]*time.Timer)
+	mutext    sync.Mutex
 )
 
 // CacheSize return the size of this cache
@@ -44,6 +46,9 @@ func TimerSize() int {
 
 // Clear the cache
 func Clear() {
+	mutext.Lock()
+	defer mutext.Unlock()
+
 	dataKeys := make([]string, len(cacheData))
 	index := 0
 	for k, _ := range cacheData {
@@ -67,6 +72,9 @@ func Clear() {
 
 // Store a value into cache identified by the key. It also specify the TTL duration
 func Store(key string, value interface{}, ttl time.Duration) {
+	mutext.Lock()
+	defer mutext.Unlock()
+
 	cacheData[key] = value
 	if timer, ok := timerData[key]; ok {
 		if !timer.Stop() {
@@ -75,6 +83,9 @@ func Store(key string, value interface{}, ttl time.Duration) {
 		timer.Reset(ttl)
 	} else {
 		timerData[key] = time.AfterFunc(ttl, func() {
+			mutext.Lock()
+			defer mutext.Unlock()
+
 			delete(cacheData, key)
 			delete(timerData, key)
 		})
@@ -83,6 +94,9 @@ func Store(key string, value interface{}, ttl time.Duration) {
 
 // Get a value from cache identified by the key. It also specify new TTL duration if it need to reset
 func Get(key string, reset bool, ttl time.Duration) interface{} {
+	mutext.Lock()
+	defer mutext.Unlock()
+
 	if value, ok := cacheData[key]; ok {
 		if timer, ok := timerData[key]; ok && reset {
 			if !timer.Stop() {
@@ -97,6 +111,9 @@ func Get(key string, reset bool, ttl time.Duration) interface{} {
 
 // Remove a cache entry
 func Remove(key string) {
+	mutext.Lock()
+	defer mutext.Unlock()
+
 	if timer, ok := timerData[key]; ok {
 		if !timer.Stop() {
 			<-timer.C
