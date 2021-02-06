@@ -119,6 +119,7 @@ func TestRetterHTTPHandler_ServeHTTP(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		t.Logf("Making fail #%d while breaker still close", i+1)
 		resp := MakeCall("GET", "/test/path", t, handler)
+		time.Sleep(100 * time.Millisecond)
 		if resp.Result().StatusCode != http.StatusOK || resp.Header().Get("X-Retter") != "cache" || resp.Header().Get("X-Circuit") != "CLOSED" {
 			t.Fatalf("Unexpected status code %d for fail #%d - retter header %s  - circuit %s", resp.Result().StatusCode, i+1, resp.Header().Get("X-Retter"), resp.Header().Get("X-Circuit"))
 		}
