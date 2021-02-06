@@ -1,4 +1,4 @@
-name: Grule-Rule-Engine
+name: retter-ci
 
 on:
   pull_request:

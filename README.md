@@ -7,6 +7,8 @@ ________________________________________________________________
         \/        \/github.com/hyperjumptech/retter\/         \/ 
 ```
 
+[![Build Status](https://github.com/hyperjumptech/grule-rule-engine/actions)](https://github.com/hyperjumptech/retter/workflows/retter-ci/badge.svg)
+
 - **RETTER** is ... a Great Savior for your great web solution.
 - **RETTER** is ... a German word for "Savior"
 - **RETTER** is ... technically its a Circuit Breaker server. Yes. [Circuit Breaker as explained by Marti Fowler](https://martinfowler.com/bliki/CircuitBreaker.html)
