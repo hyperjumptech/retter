@@ -125,8 +125,18 @@ func MakeCall(method, path string, t *testing.T, handler http.Handler) *httptest
 		t.Fatalf(err.Error())
 		return nil
 	}
+	r.Header.Add("Accept-Encoding", "gzip")
 	resp := httptest.NewRecorder()
 	handler.ServeHTTP(resp, r)
 	defer resp.Result().Body.Close()
+
+	t.Logf("----------")
+	t.Logf("Call result for %s path %s is code %d", method, path, resp.Result().StatusCode)
+	for k, v := range resp.Result().Header {
+		for _, vv := range v {
+			t.Logf("   %s : %s", k, vv)
+		}
+	}
+
 	return resp
 }

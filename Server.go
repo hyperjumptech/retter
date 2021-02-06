@@ -19,6 +19,8 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"github.com/hyperjumptech/jiffy"
 	"github.com/hyperjumptech/retter/cache"
@@ -74,9 +76,12 @@ func NewRetterHTTPHandler() http.Handler {
 	if l[0:1] == ":" {
 		l = "http://0.0.0.0" + l
 	}
-	logrus.Infof("This RETTER instance will forwards GET request...\n\tFrom : %s/*\n\tTo   : %s/*\n", l, Config.GetString(BackendURL))
-	logrus.Infof("URL Query Detect         : %s\n", Config.GetString(CacheDetectQuery))
-	logrus.Infof("URL Session Detect       : %s\n", Config.GetString(CacheDetectSession))
+	logrus.Infof("This RETTER instance will forwards GET request...")
+
+	logrus.Infof("  From : %s/*", l)
+	logrus.Infof("  To   : %s/*", Config.GetString(BackendURL))
+	logrus.Infof("URL Query Detect   : %s\n", Config.GetString(CacheDetectQuery))
+	logrus.Infof("URL Session Detect : %s\n", Config.GetString(CacheDetectSession))
 	return &RetterHTTPHandler{
 		BackendBaseURL: Config.GetString(BackendURL),
 	}
@@ -151,7 +156,7 @@ func (rhh *RetterHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 	if strings.ToUpper(req.Method) != "GET" {
 		recorder := httptest.NewRecorder()
 		Execute(15*time.Second, rhh.BackendBaseURL, recorder, req)
-		ReturnRecorder(recorder, res)
+		ReturnRecorder(req, recorder, res)
 		return
 	}
 
@@ -180,9 +185,13 @@ func (rhh *RetterHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 			// logrus.Errorf("Error in breaker execution. got %s - code : %d", err.Error(), recorder.Result().StatusCode)
 			ServeFailedProcess(recorder.Result().StatusCode, res, req, breaker.State())
 		} else {
-			recorder.Header().Set("X-Circuit", getGoBreakerString(breaker.State()))
-			recorder.Header().Set("X-Retter", "backend")
-			ReturnRecorder(recorder, res)
+			if len(recorder.Header().Get("X-Circuit")) == 0 {
+				recorder.Header().Set("X-Circuit", getGoBreakerString(breaker.State()))
+			}
+			if len(recorder.Header().Get("X-Retter")) == 0 {
+				recorder.Header().Set("X-Retter", "backend")
+			}
+			ReturnRecorder(req, recorder, res)
 			tx := &DefaultHTTPTransaction{
 				TimeStart: timeStart,
 				TimeEnd:   timeEnd,
@@ -223,12 +232,17 @@ func ServeFailedProcess(erroneousResponseCode int, res http.ResponseWriter, req 
 	if val == nil {
 		if lastSuccessTx, ok := lastKnownSuccess[key]; ok {
 			recorder := lastSuccessTx.Response()
+
+			recorder.Header().Del("X-Circuit")
 			recorder.Header().Set("X-Circuit", getGoBreakerString(state))
+			recorder.Header().Del("X-Retter")
 			recorder.Header().Set("X-Retter", "last-known-success")
-			ReturnRecorder(recorder, res)
+			ReturnRecorder(req, recorder, res)
 			serverLog.Debugf("returned from last success for key %s", key)
 		} else {
+			res.Header().Del("X-Circuit")
 			res.Header().Set("X-Circuit", getGoBreakerString(state))
+			res.Header().Del("X-Retter")
 			res.Header().Set("X-Retter", "no-cache")
 			res.WriteHeader(erroneousResponseCode)
 			res.Write([]byte("Backend is down, please try again in few minutes"))
@@ -236,17 +250,94 @@ func ServeFailedProcess(erroneousResponseCode int, res http.ResponseWriter, req 
 		return
 	}
 	cachedTx := val.(HTTPTransaction)
-	res.Header().Set("X-Circuit", getGoBreakerString(state))
+
+	cachedTx.Response().Header().Del("X-Circuit")
+	cachedTx.Response().Header().Set("X-Circuit", getGoBreakerString(state))
+	cachedTx.Response().Header().Del("X-Retter")
 	cachedTx.Response().Header().Set("X-Retter", "cache")
-	ReturnRecorder(cachedTx.Response(), res)
+
+	ReturnRecorder(req, cachedTx.Response(), res)
+}
+
+// ReturnCompressedRecorder will return the recorder IF the rrequest is asking for compressed
+// Content-Encoding using Accept-Encoding: gzip
+func ReturnCompressedRecorder(recorder *httptest.ResponseRecorder, writer http.ResponseWriter) {
+	bodyBytes := recorder.Body.Bytes()
+
+	containsContentType := false
+
+	// write the rest of the headers.
+	for key, v := range recorder.Header() {
+		for _, vv := range v {
+			if strings.ToLower(key) == "content-type" {
+				containsContentType = true
+				logrus.Tracef("%s: %s already exist.", key, vv)
+			}
+			writer.Header().Set(key, vv)
+			//logrus.Infof("GZIP Header %s : %s", key, vv)
+		}
+	}
+
+	// If its non 2xx we dont compress it.
+	if recorder.Result().StatusCode < 200 || recorder.Result().StatusCode >= 300 {
+		// write the result.
+		writer.WriteHeader(recorder.Result().StatusCode)
+		// write the body after write header so golang http will not temper to the response code
+		writer.Write(bodyBytes)
+		return
+	}
+
+	if !containsContentType {
+		ctype := http.DetectContentType(bodyBytes)
+		logrus.Tracef("Content-Type not exist. Assigning one with Content-Type: %s. ", ctype)
+		writer.Header().Set("Content-Type", ctype)
+	}
+
+	// if the body size is above minimum size zip them.
+	if len(bodyBytes) > 300 {
+
+		// add header for gzip content encoding
+		writer.Header().Set("Content-Encoding", "gzip")
+		// write the result.
+		writer.WriteHeader(recorder.Code)
+
+		// create empty byte buffer.
+		buff := bytes.NewBuffer(make([]byte, 0))
+
+		// Create new gzip writer to write gzip result into empty buffer.
+		gw := gzip.NewWriter(buff)
+
+		// Write the original content into gzip writer.
+		written, err := gw.Write(bodyBytes)
+		if err != nil {
+			logrus.Errorf("Error while writing to gzip writer. got %v", err)
+		}
+		gw.Close()
+		logrus.Tracef("Written into gzip writer %d bytes, yielding %d bytes.", written, len(buff.Bytes()))
+
+		// Write the gzip result into response body.
+		writer.Write(buff.Bytes())
+
+	} else {
+		// write the result.
+		writer.WriteHeader(recorder.Code)
+		// if the body size is bellow minimum size to zip, return them as is.
+		writer.Write(bodyBytes)
+	}
 }
 
 // ReturnRecorder will write recorded response into response writer
-func ReturnRecorder(recorder *httptest.ResponseRecorder, writer http.ResponseWriter) {
+func ReturnRecorder(request *http.Request, recorder *httptest.ResponseRecorder, writer http.ResponseWriter) {
+
+	if strings.Contains(request.Header.Get("Accept-Encoding"), "gzip") {
+		ReturnCompressedRecorder(recorder, writer)
+	}
+
 	// First we write the headers
 	for k, v := range recorder.Header() {
 		for _, val := range v {
 			writer.Header().Add(k, val)
+			//logrus.Infof("Header %s : %s", k, val)
 		}
 	}
 	// Then we write the status code
@@ -281,7 +372,17 @@ func Execute(timeout time.Duration, targetURL string, res http.ResponseWriter, r
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	request.Header = req.Header
+
+	// copy over the header, but exclude the accept-encoding gzip
+	// as we will handle this separately
+	for k, v := range req.Header {
+		for _, hv := range v {
+			if strings.ToLower(k) != "accept-encoding" && strings.Contains(strings.ToLower(hv), "gzip") {
+				request.Header.Add(k, hv)
+			}
+		}
+	}
+
 	client := &http.Client{Timeout: timeout}
 	response, err := client.Do(request)
 	if err != nil {
