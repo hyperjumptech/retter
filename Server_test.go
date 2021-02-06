@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestRetterHealthCheck(t *testing.T) {
@@ -41,8 +42,13 @@ func TestNoCacheNoLastKnown(t *testing.T) {
 	cache.Clear()
 
 	// lets start our dummy server
+	// lets start our dummy server
 	test.StartDummyServer("127.0.0.1:34251", false)
-	defer test.StopDummyServer()
+	t.Logf("Dummy server started")
+	defer func() {
+		test.StopDummyServer()
+		t.Logf("Dummy server stoped")
+	}()
 
 	t.Logf("Making dummy server always fail")
 	test.FailProbability(1.0)
@@ -86,13 +92,19 @@ func TestRetterHTTPHandler_ServeHTTP(t *testing.T) {
 
 	// lets start our dummy server
 	test.StartDummyServer("127.0.0.1:34251", false)
-	defer test.StopDummyServer()
+	t.Logf("Dummy server started")
+	defer func() {
+		test.StopDummyServer()
+		t.Logf("Dummy server stoped")
+	}()
 
 	Config[BackendURL] = "http://127.0.0.1:34251"
 	handler := NewRetterHTTPHandler()
 
 	t.Logf("Making dummy server always success")
 	test.FailProbability(0.0)
+
+	time.Sleep(100 * time.Millisecond)
 
 	t.Logf("Making success call")
 	resp := MakeCall("GET", "/test/path", t, handler)
@@ -101,6 +113,7 @@ func TestRetterHTTPHandler_ServeHTTP(t *testing.T) {
 	}
 
 	t.Logf("Making dummy server always fail")
+	time.Sleep(100 * time.Millisecond)
 	test.FailProbability(1.0)
 
 	for i := 0; i < 3; i++ {

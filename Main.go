@@ -90,7 +90,16 @@ func startServer() {
 
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {
-		log.Infof("RETTER is listening on : [%s]", listen)
+		l := Config.GetString(ServerListen)
+		if l[0:1] == ":" {
+			l = "http://0.0.0.0" + l
+		}
+		log.Infof("This RETTER instance will forwards GET request...")
+		log.Infof("  From : %s/*", l)
+		log.Infof("  To   : %s/*", Config.GetString(BackendURL))
+		log.Infof("URL Query Detect       : %s", Config.GetString(CacheDetectQuery))
+		log.Infof("URL Session Detect     : %s", Config.GetString(CacheDetectSession))
+		log.Infof("RETTER is listening on : [%s]", l)
 		if err := srv.ListenAndServe(); err != nil {
 			log.Println(err)
 		}
