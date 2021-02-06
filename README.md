@@ -11,7 +11,7 @@ ________________________________________________________________
 
 - **RETTER** is ... a Great Savior for your great web solution.
 - **RETTER** is ... a German word for "Savior"
-- **RETTER** is ... technically its a Circuit Breaker server. Yes. [Circuit Breaker as explained by Marti Fowler](https://martinfowler.com/bliki/CircuitBreaker.html)
+- **RETTER** is ... technically its a Circuit Breaker server. Yes. [Circuit Breaker as explained by Martin Fowler](https://martinfowler.com/bliki/CircuitBreaker.html)
 
 ## Problem Statement
 
