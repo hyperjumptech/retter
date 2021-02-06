@@ -90,7 +90,7 @@ func startServer() {
 
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {
-		fmt.Printf("Retter is listening on : %s\n", listen)
+		log.Infof("RETTER is listening on : [%s]\n", listen)
 		if err := srv.ListenAndServe(); err != nil {
 			log.Println(err)
 		}
